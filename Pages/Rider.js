@@ -15,7 +15,7 @@ function Rider() {
 	const [name, setName] = useState("Arose R");
 	const [loading, setLoading] = useState(false);
 
-	const distance = 50;
+	const distance = 1.7;
 
 	const handleDesitinationChange = (text) => {
 		setDestination(text);

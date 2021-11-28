@@ -23,7 +23,12 @@
                 "backgroundColor": "#FFFFFF"
             },
             "softwareKeyboardLayoutMode": "pan",
-            "package": "com.arose.Mid"
+            "package": "com.arose.Mid",
+            "config": {
+                "googleMaps": {
+                    "apiKey": "AIzaSyCwUu8zCUiV84Y-aLWvLH_IIhN1VkPYgZU"
+                }
+            }
         },
         "web": {
             "favicon": "./assets/favicon.png"

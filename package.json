@@ -13,6 +13,7 @@
     "@react-navigation/native-stack": "^6.2.5",
     "decode-google-map-polyline": "^1.0.1",
     "expo": "~43.0.2",
+    "expo-dev-client": "~0.6.3",
     "expo-location": "^13.0.4",
     "expo-status-bar": "~1.1.0",
     "react": "17.0.1",
