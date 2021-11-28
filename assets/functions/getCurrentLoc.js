@@ -9,7 +9,9 @@ export default async function getCurrentLoc() {
 			coords: { latitude, longitude },
 		} = await Location.getCurrentPositionAsync();
 		return {
-			latitude, longitude, latitudeDelta: 0.0922,
+			latitude,
+			longitude,
+			latitudeDelta: 0.0922,
 			longitudeDelta: 0.0421,
 		};
 	} catch (error) {

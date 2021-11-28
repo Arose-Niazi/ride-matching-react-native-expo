@@ -1,21 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, Image } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import getCurrentLoc from "../assets/functions/getCurrentLoc";
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import { ActivityIndicator, Button, Switch, TextInput } from "react-native-paper";
+import { ActivityIndicator, Button, TextInput } from "react-native-paper";
 import decodePolyline from 'decode-google-map-polyline';
+import showAlert from "../assets/functions/showAlert";
 
 
 function Driver() {
-
 	const [destination, setDestination] = useState("");
-	const [range, setRange] = useState("20");
 	const [targetLocation, setTargetLocation] = useState("");
 	const [path, setPath] = useState();
 	const [location, setLocation] = useState();
-	const [mapLocation, setMapLocation] = useState();
-	const [onDuty, setOnDuty] = useState(false);
-	const [name, setName] = useState("");
+	const [name, setName] = useState("Arose D");
+	const [loading, setLoading] = useState(false);
 
 	const handleDesitinationChange = (text) => {
 		setDestination(text);
@@ -25,40 +23,68 @@ function Driver() {
 		setName(text);
 	};
 
-	const handleRangeChange = (text) => {
-		setRange(text);
+	const handleRequestError = (err) => {
+		setLoading(false);
+		console.log("Request Error", err);
 	};
 
-	const onToggleDuty = () => {
-		setOnDuty(!onDuty);
-	};
-
-	const setRoute = async () => {
-		try {
-			const target = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${location.latitude},${location.longitude}&destination=${destination}&key=AIzaSyDVqR4uEmfJa-0jmqKjsariW3kJXbQh2Hk`);
-
-			console.log(`https://maps.googleapis.com/maps/api/directions/json?origin=${location.latitude},${location.longitude}&destination=${destination}&key=AIzaSyDVqR4uEmfJa-0jmqKjsariW3kJXbQh2Hk`);
-			const json = await target.json();
-			console.log(json.routes[0].legs[0].end_location.lat);
-			setPath(decodePolyline(json.routes[0].overview_polyline.points));
-			setTargetLocation({ latitude: json.routes[0].legs[0].end_location.lat, longitude: json.routes[0].legs[0].end_location.lng });
-			console.log("Pass", targetLocation);
-			console.log("Pass", path);
-		} catch (error) {
-			console.log(error);
-			setPath(undefined);
-			setTargetLocation(undefined);
+	const setRouteResponse = (response) => {
+		setLoading(false);
+		if (response.status !== 'OK') {
+			showAlert("Invalid Location", "Location not found, please enter a valid location");
+			return;
 		}
+		setPath(decodePolyline(response.routes[0].overview_polyline.points));
+		setTargetLocation({ latitude: response.routes[0].legs[0].end_location.lat, longitude: response.routes[0].legs[0].end_location.lng });
+	};
+
+	const setRoute = () => {
+		setLoading(true);
+		fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${location.latitude},${location.longitude}&destination=${destination}&key=AIzaSyDVqR4uEmfJa-0jmqKjsariW3kJXbQh2Hk`)
+			.then(response => response.json()).then(setRouteResponse)
+			.catch(handleRequestError);
+	};
+
+	const handleDriveCreateResponse = async (response) => {
+		if (response.status == 200)
+			showAlert("Drive", "Drive created sucessfully");
+		else
+			showAlert("Drive", "Failed to create drive");
+		setLoading(false);
+	};
+
+	const createDrive = async () => {
+		setLoading(true);
+		fetch('https://mad.arose-niazi.me/drive', {
+			method: 'POST',
+			body: JSON.stringify({
+				startPoint: {
+					type: 'Point',
+					coordinates: [location.longitude, location.latitude]
+				},
+				endPoint: {
+					type: 'Point',
+					coordinates: [targetLocation.longitude, targetLocation.latitude]
+				}
+			}),
+			headers: {
+				'Content-type': 'application/json; charset=UTF-8',
+			},
+		})
+			.then(handleDriveCreateResponse)
+			.catch(handleRequestError);
 	};
 
 	const updateLocation = async () => {
-		const loc = await getCurrentLoc();
-		setLocation(loc);
-		if (!mapLocation) setMapLocation(loc);
+		setLocation(await getCurrentLoc());
 	};
 
-	const onRegionChange = (region) => {
-		setMapLocation(region);
+	const handleStartChange = (e) => {
+		setLocation({
+			...e.nativeEvent.coordinate,
+			latitudeDelta: 0.0922,
+			longitudeDelta: 0.0421
+		});
 	};
 
 	useEffect(() => {
@@ -68,53 +94,64 @@ function Driver() {
 
 	return (
 		<View style={styles.container}>
-			<View style={[styles.container]}>
-				<TextInput
-					label="Name"
-					value={name}
-					onChangeText={handleNameChange}
-					style={styles.input}
+			{
+				loading ?
+					<ActivityIndicator />
+					:
+					<View>
+						<View style={[styles.container]}>
+							<TextInput
+								label="Name"
+								value={name}
+								onChangeText={handleNameChange}
+								style={styles.input}
 
-				/>
-			</View>
-			<View style={{ flex: 5 }}>
-				{
-					location ?
-						<MapView onRegionChangeComplete={onRegionChange} showsUserLocation={true} region={mapLocation} style={styles.map} >
-							{/* <Marker coordinate={{ longitude: location.longitude, latitude: location.latitude }} >
-								<View style={{ backgroundColor: "#00ff0055", padding: 10, borderRadius: 100 }}></View>
-							</Marker> */}
-							{targetLocation ?
-								<Marker coordinate={targetLocation}>
-
-								</Marker>
-								: null
-							}
+							/>
+						</View>
+						<View style={{ flex: 5 }}>
 							{
-								path ? <Polyline coordinates={path}
-									strokeWidth={2}
-									strokeColor="red"
-									lineDashPattern={[1]} /> : null
-							}
-						</MapView>
-						: <View style={styles.container}><ActivityIndicator /></View>
-				}
-			</View>
-			<View style={[styles.container, { flex: 2 }]}>
-				<View style={styles.container}>
-					<TextInput
-						label="Range"
-						keyboardType={'number-pad'}
-						value={range}
-						onChangeText={handleRangeChange}
-						style={styles.input}
+								location ?
+									<MapView showsUserLocation={true} region={location} style={styles.map} >
+										<Marker
+											draggable
+											coordinate={{ longitude: location.longitude, latitude: location.latitude }}
+											onDragEnd={handleStartChange}
+										>
 
-					/>
-				</View>
-				<View style={[styles.container, { flexDirection: 'row' }]}>
-					<Switch value={onDuty} onValueChange={onToggleDuty} color={"green"} />
-				</View>
-			</View>
+										</Marker>
+										{targetLocation ?
+											<Marker coordinate={targetLocation}>
+
+											</Marker>
+											: null
+										}
+										{
+											path && path[0].longitude && path[0].latitude ? <Polyline coordinates={path}
+												strokeWidth={2}
+												strokeColor="red"
+												lineDashPattern={[1]} /> : null
+										}
+									</MapView>
+									: <View style={styles.container}><ActivityIndicator /></View>
+							}
+						</View>
+						<View style={[styles.container, { flex: 2 }]}>
+							<View style={styles.container}>
+								<TextInput
+									label="Destination"
+									value={destination}
+									onChangeText={handleDesitinationChange}
+									style={styles.input}
+
+								/>
+							</View>
+							<View style={[styles.container, { flexDirection: 'row' }]}>
+								<Button mode="contained" style={styles.button} onPress={setRoute}>Search</Button>
+								<Button mode="contained" style={styles.button} onPress={createDrive}>Create Drive</Button>
+							</View>
+						</View>
+					</View>
+			}
 		</View>
 	);
 }

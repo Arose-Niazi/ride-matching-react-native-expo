@@ -34,13 +34,14 @@ export default class App extends React.Component {
       >
 
         <Tab.Screen
-          name="Driver"
-          component={Driver}
-        />
-        <Tab.Screen
           name="Rider"
           component={Rider}
         />
+        <Tab.Screen
+          name="Driver"
+          component={Driver}
+        />
+
       </Tab.Navigator></NavigationContainer>
     );
   }
