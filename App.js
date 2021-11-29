@@ -32,7 +32,6 @@ export default class App extends React.Component {
         })}
 
       >
-
         <Tab.Screen
           name="Rider"
           component={Rider}
@@ -41,6 +40,7 @@ export default class App extends React.Component {
           name="Driver"
           component={Driver}
         />
+
 
       </Tab.Navigator></NavigationContainer>
     );

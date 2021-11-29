@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Alert, StyleSheet, View } from 'react-native';
+import { Text, StyleSheet, View } from 'react-native';
 import getCurrentLoc from "../assets/functions/getCurrentLoc";
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { ActivityIndicator, Button, TextInput } from "react-native-paper";
-import decodePolyline from 'decode-google-map-polyline';
+import decodePolyline from '../assets/functions/decodePolyline';
 import showAlert from "../assets/functions/showAlert";
+import DatePicker from "../assets/functions/DatePicker";
 
 
 function Rider() {
@@ -14,8 +15,7 @@ function Rider() {
 	const [location, setLocation] = useState();
 	const [name, setName] = useState("Arose R");
 	const [loading, setLoading] = useState(false);
-
-	const distance = 1.7;
+	const [date, setDate] = useState();
 
 	const handleDesitinationChange = (text) => {
 		setDestination(text);
@@ -48,8 +48,21 @@ function Rider() {
 	};
 
 	const handleFindRideResponse = async (response) => {
-		if (response.results > 0)
-			showAlert("Ride", JSON.stringify(response));
+		if (response.results > 0) {
+			let drives = [];
+			for (let index = 0; index < response.data.data.length; index++) {
+				const element = response.data.data[index];
+				drives[index] = {
+					ride: index,
+					time: element.time,
+				};
+			}
+			showAlert("Ride", JSON.stringify(drives));
+			const { startPoint, endPoint } = response.data.data[0];
+			setLocation({ ...location, latitude: startPoint[0], longitude: startPoint[1] });
+			setDestination(`${endPoint[0]},${endPoint[1]}`);
+			setRoute();
+		}
 		else
 			showAlert("Ride", "No ride found");
 		setLoading(false);
@@ -57,7 +70,8 @@ function Rider() {
 
 	const findRide = async () => {
 		setLoading(true);
-		fetch(`https://mad.arose-niazi.me/ride/${distance}/${location.latitude},${location.longitude}/${targetLocation.latitude},${targetLocation.longitude}`)
+		console.log(`https://mad.arose-niazi.me/ride/${date.getTime()}/${location.latitude},${location.longitude}/${targetLocation.latitude},${targetLocation.longitude}`);
+		fetch(`https://mad.arose-niazi.me/ride/${date.getTime()}/${location.latitude},${location.longitude}/${targetLocation.latitude},${targetLocation.longitude}`)
 			.then(response => response.json()).then(handleFindRideResponse)
 			.catch(handleRequestError);
 	};
@@ -74,6 +88,10 @@ function Rider() {
 		});
 	};
 
+	const handleDate = (date) => {
+		setDate(date);
+	};
+
 	useEffect(() => {
 		//setInterval(updateLocation, 5000);
 		if (!path)
@@ -87,7 +105,10 @@ function Rider() {
 					<ActivityIndicator />
 					:
 					<View>
+						{date && <Text style={{ padding: 20 }}>{date.toISOString()}</Text>}
+						<DatePicker dateInput={handleDate} />
 						<View style={[styles.container]}>
+
 							<TextInput
 								label="Name"
 								value={name}

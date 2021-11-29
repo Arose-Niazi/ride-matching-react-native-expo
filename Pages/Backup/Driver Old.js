@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Alert, StyleSheet, Text, View, Image } from 'react-native';
-import getCurrentLoc from "../assets/functions/getCurrentLoc";
+import getCurrentLoc from "../../assets/functions/getCurrentLoc";
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { ActivityIndicator, Button, Switch, TextInput } from "react-native-paper";
 import decodePolyline from 'decode-google-map-polyline';

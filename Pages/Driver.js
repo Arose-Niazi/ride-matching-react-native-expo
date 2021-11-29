@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Alert, StyleSheet, View } from 'react-native';
+import { Text, StyleSheet, View } from 'react-native';
 import getCurrentLoc from "../assets/functions/getCurrentLoc";
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { ActivityIndicator, Button, TextInput } from "react-native-paper";
 import decodePolyline from 'decode-google-map-polyline';
 import showAlert from "../assets/functions/showAlert";
+import DatePicker from "../assets/functions/DatePicker";
 
 
 function Driver() {
@@ -14,6 +15,7 @@ function Driver() {
 	const [location, setLocation] = useState();
 	const [name, setName] = useState("Arose D");
 	const [loading, setLoading] = useState(false);
+	const [date, setDate] = useState();
 
 	const handleDesitinationChange = (text) => {
 		setDestination(text);
@@ -54,6 +56,22 @@ function Driver() {
 	};
 
 	const createDrive = async () => {
+		if (!date) {
+			showAlert("Error", "Please select date and time first!");
+			return;
+		}
+		console.log({
+			startPoint: {
+				type: 'Point',
+				coordinates: [location.longitude, location.latitude]
+			},
+			endPoint: {
+				type: 'Point',
+				coordinates: [targetLocation.longitude, targetLocation.latitude]
+			},
+			date
+		});
+
 		setLoading(true);
 		fetch('https://mad.arose-niazi.me/drive', {
 			method: 'POST',
@@ -65,7 +83,8 @@ function Driver() {
 				endPoint: {
 					type: 'Point',
 					coordinates: [targetLocation.longitude, targetLocation.latitude]
-				}
+				},
+				date
 			}),
 			headers: {
 				'Content-type': 'application/json; charset=UTF-8',
@@ -77,6 +96,10 @@ function Driver() {
 
 	const updateLocation = async () => {
 		setLocation(await getCurrentLoc());
+	};
+
+	const handleDate = (date) => {
+		setDate(date);
 	};
 
 	const handleStartChange = (e) => {
@@ -92,6 +115,7 @@ function Driver() {
 		updateLocation();
 	}, []);
 
+
 	return (
 		<View style={styles.container}>
 			{
@@ -99,6 +123,8 @@ function Driver() {
 					<ActivityIndicator />
 					:
 					<View>
+						{date && <Text style={{ padding: 20 }}>{date.toISOString()}</Text>}
+						<DatePicker dateInput={handleDate} />
 						<View style={[styles.container]}>
 							<TextInput
 								label="Name"
