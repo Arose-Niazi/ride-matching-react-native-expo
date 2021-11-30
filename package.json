@@ -12,7 +12,6 @@
     "@react-navigation/bottom-tabs": "^6.0.9",
     "@react-navigation/native": "^6.0.6",
     "@react-navigation/native-stack": "^6.2.5",
-    "decode-google-map-polyline": "^1.0.1",
     "expo": "~43.0.2",
     "expo-dev-client": "~0.6.3",
     "expo-location": "^13.0.4",

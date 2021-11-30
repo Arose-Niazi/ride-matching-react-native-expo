@@ -3,7 +3,7 @@ import { Text, StyleSheet, View } from 'react-native';
 import getCurrentLoc from "../assets/functions/getCurrentLoc";
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { ActivityIndicator, Button, TextInput } from "react-native-paper";
-import decodePolyline from 'decode-google-map-polyline';
+import decodePolyline from '../assets/functions/decodePolyline';
 import showAlert from "../assets/functions/showAlert";
 import DatePicker from "../assets/functions/DatePicker";
 
