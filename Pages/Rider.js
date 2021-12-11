@@ -11,7 +11,8 @@ import DatePicker from "../assets/functions/DatePicker";
 function Rider() {
 	const [destination, setDestination] = useState("");
 	const [targetLocation, setTargetLocation] = useState("");
-	const [path, setPath] = useState();
+	const [path, setPath] = useState(0);
+	const [otherPaths, setOtherPaths] = useState([]);
 	const [location, setLocation] = useState();
 	const [name, setName] = useState("Arose R");
 	const [loading, setLoading] = useState(false);
@@ -36,13 +37,20 @@ function Rider() {
 			showAlert("Invalid Location", "Location not found, please enter a valid location");
 			return;
 		}
-		setPath(decodePolyline(response.routes[0].overview_polyline.points));
+		let paths = [];
+		for (let index = 0; index < response.routes.length; index++) {
+			const element = response.routes[index];
+			paths[index] = decodePolyline(element.overview_polyline.points);
+		}
+		setOtherPaths(paths);
+		setPath(0);
 		setTargetLocation({ latitude: response.routes[0].legs[0].end_location.lat, longitude: response.routes[0].legs[0].end_location.lng });
 	};
 
 	const setRoute = () => {
 		setLoading(true);
-		fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${location.latitude},${location.longitude}&destination=${destination}&key=AIzaSyDVqR4uEmfJa-0jmqKjsariW3kJXbQh2Hk`)
+		console.log(`https://maps.googleapis.com/maps/api/directions/json?alternatives=true&origin=${location.latitude},${location.longitude}&destination=${destination}&key=AIzaSyDVqR4uEmfJa-0jmqKjsariW3kJXbQh2Hk`);
+		fetch(`https://maps.googleapis.com/maps/api/directions/json?alternatives=true&origin=${location.latitude},${location.longitude}&destination=${destination}&key=AIzaSyDVqR4uEmfJa-0jmqKjsariW3kJXbQh2Hk`)
 			.then(response => response.json()).then(setRouteResponse)
 			.catch(handleRequestError);
 	};
@@ -70,9 +78,44 @@ function Rider() {
 
 	const findRide = async () => {
 		setLoading(true);
-		console.log(`https://mad.arose-niazi.me/ride/${date.getTime()}/${location.latitude},${location.longitude}/${targetLocation.latitude},${targetLocation.longitude}`);
-		fetch(`https://mad.arose-niazi.me/ride/${date.getTime()}/${location.latitude},${location.longitude}/${targetLocation.latitude},${targetLocation.longitude}`)
-			.then(response => response.json()).then(handleFindRideResponse)
+		fetch('http://192.168.100.176:3001/ride/find', {
+			method: 'POST',
+			body: JSON.stringify({
+				time: date.getTime(),
+				start: [location.latitude, location.longitude],
+				end: [targetLocation.latitude, targetLocation.longitude]
+			}),
+			headers: {
+				'Content-type': 'application/json; charset=UTF-8',
+			},
+		})
+			.then(handleFindRideResponse)
+			.catch(handleRequestError);
+	};
+
+	const handleCreateRideResponse = async (response) => {
+		if (response.status == 200)
+			showAlert("Ride", "Ride created sucessfully");
+		else
+			showAlert("Ride", "Failed to create ride");
+		setLoading(false);
+	};
+
+	const addRide = async () => {
+		setLoading(true);
+		fetch('http://192.168.100.176:3001/ride/create', {
+			method: 'POST',
+			body: JSON.stringify({
+				time: date.getTime(),
+				start: [location.latitude, location.longitude],
+				end: [targetLocation.latitude, targetLocation.longitude],
+				name
+			}),
+			headers: {
+				'Content-type': 'application/json; charset=UTF-8',
+			},
+		})
+			.then(handleCreateRideResponse)
 			.catch(handleRequestError);
 	};
 
@@ -92,8 +135,13 @@ function Rider() {
 		setDate(date);
 	};
 
+	const handlePathChange = (index) => {
+		if (index === path) return;
+		console.log("Selected the line", index);
+		setPath(index);
+	};
+
 	useEffect(() => {
-		//setInterval(updateLocation, 5000);
 		if (!path)
 			updateLocation();
 	}, []);
@@ -135,10 +183,17 @@ function Rider() {
 											: null
 										}
 										{
-											path && path[0].longitude && path[0].latitude ? <Polyline coordinates={path}
-												strokeWidth={2}
-												strokeColor="red"
-												lineDashPattern={[1]} /> : null
+											otherPaths.length > 0 && path < otherPaths.length ? otherPaths.map((value, index) => (
+												<Polyline
+													key={index}
+													coordinates={value}
+													strokeWidth={4}
+													strokeColor={'green'}
+													lineDashPattern={[index]}
+													tappable={true}
+													onPress={() => handlePathChange(index)}
+												/>
+											)) : null
 										}
 									</MapView>
 									: <View style={styles.container}><ActivityIndicator /></View>
@@ -157,6 +212,7 @@ function Rider() {
 							<View style={[styles.container, { flexDirection: 'row' }]}>
 								<Button mode="contained" style={styles.button} onPress={setRoute}>Search</Button>
 								<Button mode="contained" style={styles.button} onPress={findRide}>Find Ride</Button>
+								<Button mode="contained" style={styles.button} onPress={addRide}>Add Ride</Button>
 							</View>
 						</View>
 					</View>

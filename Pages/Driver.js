@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Text, StyleSheet, View } from 'react-native';
+import { Image, Text, StyleSheet, View } from 'react-native';
 import getCurrentLoc from "../assets/functions/getCurrentLoc";
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { ActivityIndicator, Button, TextInput } from "react-native-paper";
@@ -11,11 +11,13 @@ import DatePicker from "../assets/functions/DatePicker";
 function Driver() {
 	const [destination, setDestination] = useState("");
 	const [targetLocation, setTargetLocation] = useState("");
-	const [path, setPath] = useState();
+	const [path, setPath] = useState(0);
+	const [otherPaths, setOtherPaths] = useState([]);
 	const [location, setLocation] = useState();
 	const [name, setName] = useState("Arose D");
 	const [loading, setLoading] = useState(false);
 	const [date, setDate] = useState();
+	const [rides, setRides] = useState([]);
 
 	const handleDesitinationChange = (text) => {
 		setDestination(text);
@@ -36,13 +38,28 @@ function Driver() {
 			showAlert("Invalid Location", "Location not found, please enter a valid location");
 			return;
 		}
-		setPath(decodePolyline(response.routes[0].overview_polyline.points));
+		let paths = [];
+		for (let index = 0; index < response.routes.length; index++) {
+			const element = response.routes[index];
+			paths[index] = decodePolyline(element.overview_polyline.points);
+		}
+		setOtherPaths(paths);
+		setPath(0);
 		setTargetLocation({ latitude: response.routes[0].legs[0].end_location.lat, longitude: response.routes[0].legs[0].end_location.lng });
+		console.log(`http://192.168.100.176:3001/rides/${response.routes[0].bounds.northeast.lat}/${response.routes[0].bounds.northeast.lng}/${response.routes[0].bounds.southwest.lat}/${response.routes[0].bounds.southwest.lng}`);
+		fetch(`http://192.168.100.176:3001/rides/${response.routes[0].bounds.northeast.lat}/${response.routes[0].bounds.northeast.lng}/${response.routes[0].bounds.southwest.lat}/${response.routes[0].bounds.southwest.lng}`)
+			.then(response => response.json()).then(getAllRides)
+			.catch(handleRequestError);
+	};
+
+	const getAllRides = (res) => {
+		console.log(res.data);
+		setRides(res.data);
 	};
 
 	const setRoute = () => {
 		setLoading(true);
-		fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${location.latitude},${location.longitude}&destination=${destination}&key=AIzaSyDVqR4uEmfJa-0jmqKjsariW3kJXbQh2Hk`)
+		fetch(`https://maps.googleapis.com/maps/api/directions/json?alternatives=true&origin=${location.latitude},${location.longitude}&destination=${destination}&key=AIzaSyDVqR4uEmfJa-0jmqKjsariW3kJXbQh2Hk`)
 			.then(response => response.json()).then(setRouteResponse)
 			.catch(handleRequestError);
 	};
@@ -73,7 +90,7 @@ function Driver() {
 		});
 
 		setLoading(true);
-		fetch('https://mad.arose-niazi.me/drive', {
+		fetch('http://192.168.100.176:3001/drive', {
 			method: 'POST',
 			body: JSON.stringify({
 				startPoint: {
@@ -84,7 +101,8 @@ function Driver() {
 					type: 'Point',
 					coordinates: [targetLocation.longitude, targetLocation.latitude]
 				},
-				date
+				date,
+				path
 			}),
 			headers: {
 				'Content-type': 'application/json; charset=UTF-8',
@@ -108,6 +126,16 @@ function Driver() {
 			latitudeDelta: 0.0922,
 			longitudeDelta: 0.0421
 		});
+	};
+
+	const handlePathChange = (index) => {
+		if (index === path) return;
+		console.log("Selected the line", index);
+		setPath(index);
+	};
+
+	const findRides = () => {
+
 	};
 
 	useEffect(() => {
@@ -152,10 +180,27 @@ function Driver() {
 											: null
 										}
 										{
-											path && path[0].longitude && path[0].latitude ? <Polyline coordinates={path}
-												strokeWidth={2}
-												strokeColor="red"
-												lineDashPattern={[1]} /> : null
+											otherPaths.length > 0 && path < otherPaths.length ? otherPaths.map((value, index) => (
+												<Polyline
+													key={index}
+													coordinates={value}
+													strokeWidth={4}
+													strokeColor={path === index ? 'red' : 'grey'}
+													lineDashPattern={[index]}
+													tappable={true}
+													onPress={() => handlePathChange(index)}
+												/>
+											)) : null
+										}
+										{
+											rides.length > 0 ? rides.map((value, index) => (
+												<Marker
+													key={`marker${index}`}
+													coordinate={{ latitude: value.startLat, longitude: value.startLng }}
+												>
+													<Image resizeMode="stretch" resizeMethod="resize" style={styles.mapRider} source={{ uri: `http://192.168.100.176:3001${value.img}` }} />
+												</Marker>
+											)) : null
 										}
 									</MapView>
 									: <View style={styles.container}><ActivityIndicator /></View>
@@ -202,7 +247,13 @@ const styles = StyleSheet.create({
 	input: {
 		height: 60,
 		width: 300
-	}
+	},
+	mapRider:
+	{
+		width: 20,
+		height: 20,
+		borderRadius: 20
+	},
 });
 
 export default Driver;
