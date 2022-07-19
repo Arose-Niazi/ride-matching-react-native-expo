@@ -46,8 +46,8 @@ function Driver() {
 		setOtherPaths(paths);
 		setPath(0);
 		setTargetLocation({ latitude: response.routes[0].legs[0].end_location.lat, longitude: response.routes[0].legs[0].end_location.lng });
-		console.log(`http://192.168.100.176:3001/rides/${response.routes[0].bounds.northeast.lat}/${response.routes[0].bounds.northeast.lng}/${response.routes[0].bounds.southwest.lat}/${response.routes[0].bounds.southwest.lng}`);
-		fetch(`http://192.168.100.176:3001/rides/${response.routes[0].bounds.northeast.lat}/${response.routes[0].bounds.northeast.lng}/${response.routes[0].bounds.southwest.lat}/${response.routes[0].bounds.southwest.lng}`)
+		console.log(`https://mad.arose-niazi.me/rides/${response.routes[0].bounds.northeast.lat}/${response.routes[0].bounds.northeast.lng}/${response.routes[0].bounds.southwest.lat}/${response.routes[0].bounds.southwest.lng}`);
+		fetch(`https://mad.arose-niazi.me/rides/${response.routes[0].bounds.northeast.lat}/${response.routes[0].bounds.northeast.lng}/${response.routes[0].bounds.southwest.lat}/${response.routes[0].bounds.southwest.lng}`)
 			.then(response => response.json()).then(getAllRides)
 			.catch(handleRequestError);
 	};
@@ -90,7 +90,7 @@ function Driver() {
 		});
 
 		setLoading(true);
-		fetch('http://192.168.100.176:3001/drive', {
+		fetch('https://mad.arose-niazi.me/drive', {
 			method: 'POST',
 			body: JSON.stringify({
 				startPoint: {
@@ -198,7 +198,7 @@ function Driver() {
 													key={`marker${index}`}
 													coordinate={{ latitude: value.startLat, longitude: value.startLng }}
 												>
-													<Image resizeMode="stretch" resizeMethod="resize" style={styles.mapRider} source={{ uri: `http://192.168.100.176:3001${value.img}` }} />
+													<Image resizeMode="stretch" resizeMethod="resize" style={styles.mapRider} source={{ uri: `https://mad.arose-niazi.me${value.img}` }} />
 												</Marker>
 											)) : null
 										}

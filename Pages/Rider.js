@@ -56,6 +56,7 @@ function Rider() {
 	};
 
 	const handleFindRideResponse = async (response) => {
+		console.log(response);
 		if (response.results > 0) {
 			let drives = [];
 			for (let index = 0; index < response.data.data.length; index++) {
@@ -78,7 +79,12 @@ function Rider() {
 
 	const findRide = async () => {
 		setLoading(true);
-		fetch('http://192.168.100.176:3001/ride/find', {
+		console.log({
+			time: date.getTime(),
+			start: [location.latitude, location.longitude],
+			end: [targetLocation.latitude, targetLocation.longitude]
+		});
+		fetch('https://mad.arose-niazi.me/ride/find', {
 			method: 'POST',
 			body: JSON.stringify({
 				time: date.getTime(),
@@ -89,6 +95,7 @@ function Rider() {
 				'Content-type': 'application/json; charset=UTF-8',
 			},
 		})
+			.then(res => res.json())
 			.then(handleFindRideResponse)
 			.catch(handleRequestError);
 	};
@@ -103,7 +110,7 @@ function Rider() {
 
 	const addRide = async () => {
 		setLoading(true);
-		fetch('http://192.168.100.176:3001/ride/create', {
+		fetch('https://mad.arose-niazi.me/ride/create', {
 			method: 'POST',
 			body: JSON.stringify({
 				time: date.getTime(),

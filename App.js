@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import Rider from './Pages/Rider';
 import Driver from './Pages/Driver';
+import LocationPage from './Pages/LocationPage';
 
 
 const Tab = createBottomTabNavigator();
@@ -32,6 +33,10 @@ export default class App extends React.Component {
         })}
 
       >
+        <Tab.Screen
+          name="Location"
+          component={LocationPage}
+        />
         <Tab.Screen
           name="Rider"
           component={Rider}
